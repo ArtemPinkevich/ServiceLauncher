@@ -1,0 +1,17 @@
+﻿<UserControl x:Class="ServiceLauncher.View.ServerLauncherView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:viewModel="clr-namespace:ServiceLauncher.ViewModel"
+             mc:Ignorable="d" 
+             d:DesignHeight="70" 
+             d:DesignWidth="200"
+             d:DataContext="{d:DesignInstance viewModel:ServerLauncherViewModel}">
+
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+        <Button Content="Start" Command="{Binding StartCommand}" Width="45" Height="30" Margin="1"/>
+        <Button Content="Stop" Command="{Binding StopCommand}" Width="45" Height="30" Margin="1"/>
+        <Button Content="Restart" Command="{Binding RestartCommand}" Width="60" Height="30" Margin="1"/>
+    </StackPanel>
+</UserControl>

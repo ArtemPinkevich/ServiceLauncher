@@ -17,11 +17,19 @@ namespace ServiceLauncher.ViewModel
         #region Fields
         
         private readonly IServiceManager _serviceManager;
+        private readonly ISettingsManager _settingsManager;
         private bool _isStateChangeInProgress;
+        private string _errorMessage;
 
         #endregion
 
         #region Properties
+
+        public string ErrorMessage
+        {
+            get => _errorMessage;
+            set => SetProperty(ref _errorMessage, value);
+        }
 
         public DelegateCommand StartCommand { get; }
 
@@ -33,14 +41,21 @@ namespace ServiceLauncher.ViewModel
 
         #region Constructors
 
-        public ServerLauncherViewModel(IServiceManager serviceManager)
+        public ServerLauncherViewModel(IServiceManager serviceManager, ISettingsManager settingsManager)
         {
             _serviceManager = serviceManager;
-            _serviceManager.StatusChanged += HandleServiceManagerStatusChanged;
+            _settingsManager = settingsManager;
 
             StartCommand = new DelegateCommand(ExecuteStartCommand, CanExecuteStart);
             StopCommand = new DelegateCommand(ExecuteStopCommand, CanExecuteStop);
             RestartCommand = new DelegateCommand(ExecuteRestartCommand, CanRestartCommand);
+
+            _serviceManager.StatusChanged += HandleServiceManagerStatusChanged;
+            _serviceManager.Connected += HandleServiceManagerOnConnected;
+            _serviceManager.ConnectionFailed += HandleServiceManagerOnConnectionFailed;
+            _serviceManager.ServiceActionFailed += HandleServiceManagerOnServiceActionFailed;
+
+            _serviceManager.ConnectToService(_settingsManager.GetSettings().ServiceName);
         }
 
         #endregion
@@ -95,15 +110,15 @@ namespace ServiceLauncher.ViewModel
         private void ExecuteStartCommand()
         {
             _isStateChangeInProgress = true;
-
-            _serviceManager.StartAsync();
+            
+            _serviceManager.Start();
         }
 
         private void ExecuteStopCommand()
         {
             _isStateChangeInProgress = true;
 
-            _serviceManager.StopAsync();
+            _serviceManager.Stop();
         }
 
         private void ExecuteRestartCommand()
@@ -111,12 +126,34 @@ namespace ServiceLauncher.ViewModel
             _serviceManager.RestartAsync();
         }
 
-        private void HandleServiceManagerStatusChanged(object sender, EventArgs eventArgs)
+        private void RefreshView()
         {
             _isStateChangeInProgress = false;
             StartCommand.RaiseCanExecuteChanged();
             StopCommand.RaiseCanExecuteChanged();
             RestartCommand.RaiseCanExecuteChanged();
+        }
+
+        private void HandleServiceManagerStatusChanged(object sender, EventArgs eventArgs)
+        {
+            RefreshView();
+        }
+
+        private void HandleServiceManagerOnServiceActionFailed(object sender, EventArgs eventArgs)
+        {
+            RefreshView();
+        }
+
+        private void HandleServiceManagerOnConnected(object sender, EventArgs eventArgs)
+        {
+            ErrorMessage = string.Empty;
+            RefreshView();
+        }
+
+        private void HandleServiceManagerOnConnectionFailed(object sender, EventArgs eventArgs)
+        {
+            ErrorMessage = $"Service \"{_settingsManager.GetSettings().ServiceName}\" doesn't exist";
+            RefreshView();
         }
 
         #endregion

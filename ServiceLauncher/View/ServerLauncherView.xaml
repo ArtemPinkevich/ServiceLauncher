@@ -9,9 +9,22 @@
              d:DesignWidth="200"
              d:DataContext="{d:DesignInstance viewModel:ServerLauncherViewModel}">
 
-    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-        <Button Content="Start" Command="{Binding StartCommand}" Width="45" Height="30" Margin="1"/>
-        <Button Content="Stop" Command="{Binding StopCommand}" Width="45" Height="30" Margin="1"/>
-        <Button Content="Restart" Command="{Binding RestartCommand}" Width="60" Height="30" Margin="1"/>
-    </StackPanel>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center">
+            <Button Content="Start" Command="{Binding StartCommand}" Width="45" Height="30" Margin="1" IsEnabled="False"/>
+            <Button Content="Stop" Command="{Binding StopCommand}" Width="45" Height="30" Margin="1"/>
+            <Button Content="Restart" Command="{Binding RestartCommand}" Width="60" Height="30" Margin="1"/>
+        </StackPanel>
+        <TextBlock Grid.Row="1" 
+                   Text="{Binding Path=ErrorMessage}" 
+                   Visibility="{Binding Path=ErrorMessage, Converter={StaticResource StringNullOrEmptyToVisibilityConverter}}"
+                   ToolTip="{Binding Path=ErrorMessage}"
+                   TextTrimming="CharacterEllipsis"
+                   Foreground="Red"
+                   Margin="10,0,5,2"/>
+    </Grid>
 </UserControl>

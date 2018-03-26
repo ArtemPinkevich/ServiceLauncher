@@ -15,13 +15,13 @@ namespace ServiceLauncher.Logic
     {
         #region Constants
 
-        private const string SERVICE_NAME = "";
         private const int UPDATE_SERVICE_STATUS_PERIOD = 1000;
 
         #endregion
 
         #region Fields
 
+        private string _serviceName;
         private ServiceController _serviceController;
         private readonly Timer _updateServiceStatusTimer;
 
@@ -29,10 +29,10 @@ namespace ServiceLauncher.Logic
 
         #region Events
 
-        /// <summary>
-        /// Occurs when Status of the windows service is changed.
-        /// </summary>
         public event EventHandler<EventArgs> StatusChanged;
+        public event EventHandler<EventArgs> Connected;
+        public event EventHandler<EventArgs> ConnectionFailed;
+        public event EventHandler<EventArgs> ServiceActionFailed;
 
         #endregion
 
@@ -71,62 +71,41 @@ namespace ServiceLauncher.Logic
             return _serviceController?.Status == ServiceControllerStatus.Stopped;
         }
 
+        public void ConnectToService(string serviceName)
+        {
+            _serviceName = serviceName;
+            _serviceController = string.IsNullOrEmpty(_serviceName)
+                                     ? null
+                                     : ServiceController.GetServices().FirstOrDefault(o => o.ServiceName.Equals(_serviceName));
+
+            if (_serviceController == null)
+            {
+                ConnectionFailed?.Invoke(this, EventArgs.Empty);
+            }
+            else
+            {
+                Connected?.Invoke(this, EventArgs.Empty);
+            }
+        }
+
         public async void RestartAsync()
         {
-            if (_serviceController == null)
+            try
             {
-                return;
+                Stop();
+                OnStatusChanged();
+
+                await Task.Run(() => _serviceController.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(10)));
+                _serviceController.Start();
+            }
+            catch (Exception)
+            {
+                ServiceActionFailed?.Invoke(this, EventArgs.Empty);
             }
 
-            await Task.Run(() => Stop());
-            OnStatusChanged();
-
-            await Task.Run(
-                () =>
-                {
-                    try
-                    {
-                        _serviceController.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(10));
-                        _serviceController.Start();
-                    }
-                    catch (Exception)
-                    {
-                    }
-                });
         }
 
-        /// <summary>
-        /// Starts the service.
-        /// </summary>
-        public async void StartAsync()
-        {
-            if (_serviceController == null)
-            {
-                return;
-            }
-
-            await Task.Run(() => Start());
-        }
-
-        /// <summary>
-        /// Stops this service and any services that are dependent on this service.
-        /// </summary>
-        public async void StopAsync()
-        {
-            if (_serviceController == null)
-            {
-                return;
-            }
-
-            await Task.Run(() => Stop());
-        }
-
-        private void OnStatusChanged()
-        {
-            StatusChanged?.Invoke(this, EventArgs.Empty);
-        }
-
-        private void Start()
+        public void Start()
         {
             try
             {
@@ -134,11 +113,11 @@ namespace ServiceLauncher.Logic
             }
             catch (Exception)
             {
-                // TODO Need write to log
+                ServiceActionFailed?.Invoke(this, EventArgs.Empty);
             }
         }
 
-        private void Stop()
+        public void Stop()
         {
             try
             {
@@ -146,22 +125,18 @@ namespace ServiceLauncher.Logic
             }
             catch (Exception)
             {
-                // TODO Need write to log
+                ServiceActionFailed?.Invoke(this, EventArgs.Empty);
             }
+        }
+
+        private void OnStatusChanged()
+        {
+            StatusChanged?.Invoke(this, EventArgs.Empty);
         }
 
         private void UpdateServiceStatus(object state)
         {
-            if (_serviceController == null)
-            {
-                _serviceController = ServiceController.GetServices().FirstOrDefault(o => o.ServiceName.Contains(SERVICE_NAME));
-
-                if (_serviceController != null)
-                {
-                    OnStatusChanged();
-                }
-            }
-            else
+            if (_serviceController != null)
             {
                 try
                 {

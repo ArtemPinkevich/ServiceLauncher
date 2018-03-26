@@ -32,6 +32,7 @@
         {
             base.ConfigureContainer();
 
+            Container.RegisterType<ISettingsManager, SettingsManager>(new ContainerControlledLifetimeManager());
             Container.RegisterType<IServiceManager, ServiceManager>(new ContainerControlledLifetimeManager());
             Container.RegisterType<ServerLauncherViewModel>(new ContainerControlledLifetimeManager());
         }

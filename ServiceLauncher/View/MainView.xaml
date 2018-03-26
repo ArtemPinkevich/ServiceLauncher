@@ -4,21 +4,67 @@
                      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                      xmlns:mahapps="http://metro.mahapps.com/winfx/xaml/controls"
+                     xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
                      xmlns:view="clr-namespace:ServiceLauncher.View"
                      xmlns:viewModel="clr-namespace:ServiceLauncher.ViewModel"
                      mc:Ignorable="d"
-                     Title="Service Launcher"
+                     ShowTitleBar="{Binding Path=ShowTitleEnabled}"
+                     Title="{Binding Path=ServiceName}"
                      TitleCharacterCasing="Normal"
+                     WindowTitleBrush="Transparent"
                      NonActiveWindowTitleBrush="Transparent"
-                     Height="70"
+                     ShowMaxRestoreButton="False"
+                     ShowMinButton="False"
+                     MinHeight="75"
                      Width="170"
                      ResizeMode="NoResize"
+                     SizeToContent="Height"
                      Topmost="True"
-                     Background="Transparent" 
+                     Background="#000000" 
                      BorderThickness="0"
+                     AllowsTransparency="True"
                      d:DataContext="{d:DesignInstance viewModel:MainViewModel}">
 
-    <Grid>
-        <view:ServerLauncherView DataContext="{Binding Path=ServerLauncherVm}"/>
+    <mahapps:MetroWindow.TitleTemplate>
+        <DataTemplate>
+            <TextBlock Text="{TemplateBinding Content}" 
+                       ToolTip="{TemplateBinding Content}"
+                       TextTrimming="CharacterEllipsis"
+                       VerticalAlignment="Center"
+                       Margin="8 0 8 0"
+                       FontWeight="Light"
+                       FontSize="13"/>
+        </DataTemplate>
+    </mahapps:MetroWindow.TitleTemplate>
+    
+    <mahapps:MetroWindow.Style>
+        <Style TargetType="{x:Type mahapps:MetroWindow}">
+            <Setter Property="Opacity" Value="{Binding Path=Opacity}"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Opacity" Value="1"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </mahapps:MetroWindow.Style>
+    
+    <mahapps:MetroWindow.RightWindowCommands>
+        <mahapps:WindowCommands ShowSeparators="True" Margin="0" Padding="0">
+            <ToggleButton IsChecked="{Binding Path=IsInEditMode}" ToolTip="Settings">
+                    <iconPacks:PackIconMaterial Kind="Settings" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+            </ToggleButton>
+        </mahapps:WindowCommands>
+    </mahapps:MetroWindow.RightWindowCommands>
+
+    <Grid >
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Margin="10,4,10,4" Visibility="{Binding Path=IsInEditMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <view:SettingsView DataContext="{Binding Path=SettingsVm}"/>
+        </Border>
+        <view:ServerLauncherView Grid.Row="1" DataContext="{Binding Path=ServerLauncherVm}" Margin="0,4,0,4"/>
     </Grid>
 </mahapps:MetroWindow>
